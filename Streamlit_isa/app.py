@@ -3,54 +3,54 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Chargement des données
+# dataset
 df = pd.read_csv('/app/get_around_pricing_ML.csv')
 # Nouveau dataset pour l'analyse des retards
 df_delay = pd.read_csv('/app/get_around_delay_analysis.csv', sep=';')
 
-# Titre du dashboard
+# Titre
 st.title("Dashboard Getaround isa")
 
-# Afficher deux graphiques côte à côte
+# Graph1
 #st.subheader("Distribution des types d'enregistrement et de l'état de location")
 col1, col2 = st.columns(2)
 
-# Graphique 1: Distribution des valeurs de type d'enregistrement
+# Graphique1.1
 with col1:
     fig_checkin_type = px.histogram(df_delay, x='checkin_type', title="Types d'enregistrement", template='plotly_white')
     fig_checkin_type.update_layout(title={'x': 0.5, 'xanchor': 'center'})
     st.plotly_chart(fig_checkin_type)
 
-# Graphique 2: Distribution des valeurs de l'état de location des voitures
+# Graphique2
 with col2:
     fig_state = px.histogram(df_delay, x='state', title="État de location des voitures", template='plotly_white')
     fig_state.update_layout(title={'x': 0.5, 'xanchor': 'center'})
     st.plotly_chart(fig_state)
 
-# Sous-titre pour chaque question et graphique correspondant
+# Sous-titre 
 
-# Impact des retours tardifs des voitures sur la satisfaction client
+# Impact des retours tardifs 
 st.subheader("Quel est l'impact des retours tardifs des voitures sur la satisfaction client ?")
-# Ajout d'une nouvelle colonne indiquant si le retour est tardif (seuil > 30 minutes)
+# Nouvelle colonne (seuil > 30 minutes)
 df_delay['late_return'] = df_delay['delay_at_checkout_in_minutes'] > 30
 fig_impact_late_return = px.histogram(df_delay, x='state', color='late_return', barmode='group', title="Impact des retours tardifs sur l'état de la location", template='plotly_white', labels={'late_return': 'Retour tardif'})
 st.plotly_chart(fig_impact_late_return)
 
 # Seuil : quelle doit être la durée minimale du délai ?
 st.subheader("Seuil : quelle doit être la durée minimale du délai ?")
-# Ajout nouvelle colonne pour catégoriser les délais en intervalles
+# Nouvelle colonne
 bins = [0, 30, 60, 90, 120, 180, float('inf')]
 labels = ['0-30', '30-60', '60-90', '90-120', '120-180', '>180']
 df_delay['delay_interval'] = pd.cut(df_delay['time_delta_with_previous_rental_in_minutes'], bins=bins, labels=labels)
-# Calcul pourcentage de retours tardifs pour chaque intervalle
+# Pourcentage de retours tardifs
 delay_analysis = df_delay.groupby('delay_interval')['late_return'].mean() * 100
 fig_delay_analysis = px.bar(delay_analysis, x=delay_analysis.index, y=delay_analysis.values, labels={'x': 'Délai entre les locations (en minutes)', 'y': 'Pourcentage de retours tardifs (%)'}, title='Pourcentage de retours tardifs par intervalle de délai entre les locations', template='plotly_white')
 st.plotly_chart(fig_delay_analysis)
 
-# Portée : devons-nous activer la fonctionnalité pour toutes les voitures ? Uniquement pour les voitures connectées ?
+# Portée 
 st.subheader("Portée : devons-nous activer la fonctionnalité pour toutes les voitures ? Uniquement pour les voitures connectées ?")
 
-# Utiliser un countplot pour compter les occurrences de 'checkin_type' et 'late_return'
+# occurrences de 'checkin_type' et 'late_return'
 df_delay_grouped = df_delay.groupby('checkin_type')['late_return'].mean().reset_index()
 
 fig_checkin_type_performance = px.bar(
@@ -67,7 +67,7 @@ fig_checkin_type_performance.update_xaxes(title='Type de Check-in')
 st.plotly_chart(fig_checkin_type_performance)
 
 
-# Combien de locations seraient affectées par la fonctionnalité en fonction du seuil et de la portée choisis ?
+# Combien de locations seraient affectées par la fonctionnalité...
 st.subheader("Combien de locations seraient affectées par la fonctionnalité en fonction du seuil et de la portée choisis ?")
 seuils = [90, 120]
 mobile_data = df_delay[df_delay['checkin_type'] == 'mobile']
@@ -85,7 +85,7 @@ st.plotly_chart(fig_locations_affectees)
 # Sous-titre DATASET PRIX
 st.subheader("Analyse des prix de location des voitures")
 
-# Ajout de filtres
+# filtres
 model_key = st.selectbox("Sélectionner un modèle de voiture", options=["Tous"] + list(df['model_key'].unique()))
 engine_power = st.slider("Puissance du moteur (en chevaux)", int(df['engine_power'].min()), int(df['engine_power'].max()), (int(df['engine_power'].min()), int(df['engine_power'].max())))
 fuel_type = st.multiselect("Type de carburant", options=df['fuel'].unique(), default=df['fuel'].unique())
@@ -107,13 +107,13 @@ filtered_df = filtered_df[filtered_df['car_type'].isin(car_type)]
 if private_parking_available != "Tous":
     filtered_df = filtered_df[filtered_df['private_parking_available'] == (private_parking_available == True)]
 
-# Distribution des prix de location
+# Graph prix de location
 st.subheader("Distribution des prix de location par jour")
 fig = px.histogram(filtered_df, x='rental_price_per_day', nbins=20, title='Distribution des prix de location', labels={'rental_price_per_day': 'Prix de location par jour'}, template='plotly_white', color_discrete_sequence=['#1DD0F1'])
 fig.update_layout(xaxis_title='Prix de location par jour', yaxis_title='Fréquence')
 
 st.plotly_chart(fig)
 
-# Statistiques descriptives
+# Stats
 st.subheader("Statistiques descriptives des prix de location")
 st.write(filtered_df['rental_price_per_day'].describe())
