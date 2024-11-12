@@ -5,14 +5,14 @@ import numpy as np
 import pandas as pd
 import uvicorn
 
-# Charger le préprocesseur et le modèle ML
+# import préprocesseur et le modèle 
 preprocessor = joblib.load('/app/preprocessor.pkl')
 model = joblib.load('/app/modele_isa24_logistic_regression.pkl')
 
-# Créer l'application FastAPI
+# Création de l'application
 app = FastAPI()
 
-# Définir le format des données d'entrée
+# format des données d'entrée
 class InputData(BaseModel):
     engine_power: int
     automatic_car: bool
@@ -22,15 +22,15 @@ class InputData(BaseModel):
     paint_color: str
     car_type: str
 
-# Point de terminaison racine pour éviter l'erreur 404
+# Point de terminaison racine GET
 @app.get("/")
 async def root():
     return {"message": "Bienvenue sur l'API de prédiction ! Utilisez /predict pour faire des prédictions."}
 
-# Créer le point de terminaison /predict
+# point de terminaison /predict
 @app.post("/predict")
 async def predict(data: InputData):
-    # Extraire les caractéristiques de l'objet data
+    # caractéristiques
     input_data = {
         "engine_power": [data.engine_power],
         "automatic_car": [int(data.automatic_car)],  # Convertir en int (0 ou 1)
@@ -41,18 +41,18 @@ async def predict(data: InputData):
         "car_type": [data.car_type]
     }
 
-    # Convertir les données d'entrée en DataFrame
+    # Convertion des données d'entrée en DataFrame
     input_df = pd.DataFrame(input_data)
 
-    # Transformer les données d'entrée avec le préprocesseur
+    # préprocesseur
     input_preprocessed = preprocessor.transform(input_df)
 
-    # Faire des prédictions
+    # prédictions
     predictions = model.predict(input_preprocessed)
 
-    # Retourner les prédictions sous forme JSON
+    # Prédiction en JSON
     return {"prediction": predictions.tolist()}
 
-# Lancer l'application si ce fichier est exécuté directement
+# application
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
